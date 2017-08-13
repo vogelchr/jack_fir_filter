@@ -1,0 +1,4 @@
+Testing fixed point IIR filter, to be implemented in a FPGA later.
+
+Called "jack" filter, because it's based on previous work, and to be tested
+within the JACK audio framework.
