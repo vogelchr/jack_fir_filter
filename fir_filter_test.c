@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define NSAMPLES 128
+#define NSAMPLES 1024
 
 int32_t inbuf[NSAMPLES];
 int32_t outbuf[NSAMPLES];

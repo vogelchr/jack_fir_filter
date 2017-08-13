@@ -16,7 +16,8 @@ N = int(T*fS)  # number of samples
 t = np.linspace(0.0, T, N, False)
 
 # original data
-x = np.random.normal(scale=.01, size=N)
+x = np.clip(np.random.normal(scale=1.0, size=N), -1.0, 1.0)
+x *= .4
 fx, Px = scipy.signal.welch(x, fS)
 
 # filter data
@@ -25,15 +26,13 @@ y = scipy.signal.lfilter(b, a, x)
 fy, Py = scipy.signal.welch(y, fS)
 
 # write filter taps for external program, then filter
-# data is 32bit signed integers with +/-1 == +/- 2^24
-# also coefficients are scaled by 2^24
 with open('taps.txt','wt') as f :
 	print(len(b), file=f)
 	for i in range(1, len(a)) :
-		print(int(a[i]*(1<<24)), file=f)
+		print(int(a[i]*(1<<20)), file=f)
 	for i in range(0, len(a)) :
-		print(int(b[i]*(1<<24)), file=f)
-x_raw = (x*(1<<24)).astype(np.int32)
+		print(int(b[i]*(1<<20)), file=f)
+x_raw = (x*(1<<20)).astype(np.int32)
 x_raw.tofile('x_raw.bin')
 try :
 	os.unlink('y_raw.bin')
@@ -41,7 +40,7 @@ except FileNotFoundError as e :
 	pass
 subprocess.run(["./fir_filter_test", "taps.txt", "x_raw.bin", "y_raw.bin"])
 y_raw = np.fromfile('y_raw.bin', np.int32)
-y_ext = y_raw.astype(np.float)*(1.0/(1<<24))
+y_ext = y_raw.astype(np.float)*(1.0/(1<<20))
 print('Read %d samples from ext. file'%(y_ext.shape[0]))
 
 # calculate difference
@@ -52,19 +51,36 @@ fd, Pd = scipy.signal.welch(dy, fS)
 
 fig = plt.figure()
 ax = fig.add_subplot(1,1,1)
+ax.set_title('Frequency Domain')
+ax.set_xlabel('Frequency [Hz]')
+ax.set_ylabel('Power Spectral Density [Power/Hz]')
 # ax.semilogx(fx,PtodB(Px), label='Raw')
 ax.loglog(fy, Py, label='Filt')
 ax.loglog(fye,Pye, label='Ext')
 ax.loglog(fd, Pd, label='Diff')
 ax.grid(True, which='major', linestyle='-')
 ax.grid(True, which='minor', linestyle='--')
-ax.legend()
+ax.legend(loc=0)
 fig.show()
 
-fig = plt.figure()
-ax = fig.add_subplot(1,1,1)
-# ax.plot(t[1000:1200], x[1000:1200])
-ax.plot(t[1000:1200], y[1000:1200])
-ax.plot(t[1000:1200], y_ext[1000:1200])
-ax.grid()
-fig.show()
+# fig = plt.figure()
+# ax = fig.add_subplot(1,1,1)
+# ax.set_title('Time Domain')
+# ax.set_xlabel('Time [s]')
+# ax.set_ylabel('Amplitude')
+# ax.plot(t[1000:1200], y[1000:1200], label='Filtered')
+# ax.plot(t[1000:1200], y_ext[1000:1200], label='External')
+# ax.grid()
+# ax.legend(loc=0)
+# fig.show()
+
+# fig = plt.figure()
+# ax = fig.add_subplot(1,1,1)
+# ax.set_title('Time Domain')
+# ax.set_xlabel('Time [s]')
+# ax.set_ylabel('Amplitude')
+# ax.plot(t, dy, label='Difference')
+# ax.grid()
+# ax.legend(loc=0)
+# fig.show()
+

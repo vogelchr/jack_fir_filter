@@ -54,7 +54,7 @@ fir_filter_fix_mult(int32_t a, int32_t b) {
 	int64_t tmp;
 
 	tmp = (int64_t)a * (int64_t)b;
-	return (int32_t)(tmp >> 24);
+	return (int32_t)(tmp >> 20);
 }
 
 extern inline int32_t
